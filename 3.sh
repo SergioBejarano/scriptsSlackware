@@ -4,21 +4,25 @@ clear_screen() {
     clear
 }
 
-show_last_logs() {
-    echo "\nShowing last 15 lines of system logs:\n"
-    tail -n 15 /var/log/syslog 2>/dev/null
-    tail -n 15 /var/log/auth.log 2>/dev/null
-    tail -n 15 /var/log/dmesg 2>/dev/null
+show_logs() {
+    log_files=("/var/log/syslog" "/var/log/auth.log" "/var/log/dmesg")
+
+    for log in "${log_files[@]}"; do
+        echo -e "\\n===== [LOG: $log] ====="
+        tail -n 15 "$log"
+    done
 }
 
 filter_logs() {
-    echo -n "Enter the word to filter logs: "
-    read word
-    echo "\nFiltered logs containing '$word':\n"
-    tail -n 15 /var/log/syslog 2>/dev/null | grep --color=auto "$word"
-    tail -n 15 /var/log/auth.log 2>/dev/null | grep --color=auto "$word"
-    tail -n 15 /var/log/dmesg 2>/dev/null | grep --color=auto "$word"
+    read -p "Enter the keyword to filter: " keyword
+    log_files=("/var/log/syslog" "/var/log/auth.log" "/var/log/dmesg")
+
+    for log in "${log_files[@]}"; do
+        echo -e "\\n===== [LOG: $log] ====="
+        tail -n 15 "$log" | grep --color=always "$keyword"
+    done
 }
+
 
 while true; do
     clear_screen

@@ -5,7 +5,7 @@ clear_screen() {
 }
 
 show_last_logs() {
-    log_files=("/var/log/syslog" "/var/log/auth.log" "/var/log/dmesg")
+    log_files=("/var/log/syslog" "/var/log/messages" "/var/log/dmesg")
 
     for log in "${log_files[@]}"; do
         echo -e "\\n===== [LOG: $log] ====="
@@ -15,7 +15,7 @@ show_last_logs() {
 
 filter_logs() {
     read -p "Enter the keyword to filter: " keyword
-    log_files=("/var/log/syslog" "/var/log/auth.log" "/var/log/dmesg")
+    log_files=("/var/log/syslog" "/var/log/messages" "/var/log/dmesg")
 
     for log in "${log_files[@]}"; do
         echo -e "\\n===== [LOG: $log] ====="

@@ -4,7 +4,7 @@ clear_screen() {
     clear
 }
 
-show_logs() {
+show_last_logs() {
     log_files=("/var/log/syslog" "/var/log/auth.log" "/var/log/dmesg")
 
     for log in "${log_files[@]}"; do

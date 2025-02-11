@@ -37,6 +37,9 @@ list_files() {
             eval $find_command | sort -k4 | awk '{count[$4]++; print} END {for (type in count) print type, count[type]}' | less
             ;;
     esac
+    
+    echo -e "\nPress Enter to return to the menu..."
+    read -r
 }
 
 while true; do

@@ -1,174 +1,92 @@
 #!/bin/bash
 
-# Function to list files with detailed information
 list_files() {
-    local dir=$1
-    local recursive=$2
-    local find_command="find \"$dir\""
-
-    if [ "$recursive" == "no" ]; then
-        find_command+=" -maxdepth 1"
+    local dir="$1"
+    local option="$2"
+    local filter_type="$3"
+    local filter_value="$4"
+    
+    find_command="find \"$dir\""
+    
+    if [ "$filter_type" = "starts" ]; then
+        find_command+=" -name \"$filter_value*\""
+    elif [ "$filter_type" = "ends" ]; then
+        find_command+=" -name \"*$filter_value\""
+    elif [ "$filter_type" = "contains" ]; then
+        find_command+=" -name \"*$filter_value*\""
+    else
+        find_command+=" -name \"*\""
     fi
-
-    eval "$find_command" -type f -exec stat --format="%Y %s %F %n" {} + | sort -k1,1n
+    
+    find_command+=" -printf '%p %s %TY-%Tm-%Td %y\n'"
+    
+    case $option in
+        "recent")
+            eval $find_command | sort -k3 -r | awk '{count[$3]++; print} END {for (date in count) print date, count[date]}' | less
+            ;;
+        "oldest")
+            eval $find_command | sort -k3 | awk '{count[$3]++; print} END {for (date in count) print date, count[date]}' | less
+            ;;
+        "size-desc")
+            eval $find_command | sort -k2 -nr | awk '{count[$2]++; print} END {for (size in count) print size, count[size]}' | less
+            ;;
+        "size-asc")
+            eval $find_command | sort -k2 -n | awk '{count[$2]++; print} END {for (size in count) print size, count[size]}' | less
+            ;;
+        "type")
+            eval $find_command | sort -k4 | awk '{count[$4]++; print} END {for (type in count) print type, count[type]}' | less
+            ;;
+    esac
 }
 
-# Function to display files sorted by modification time
-sort_by_modification_time() {
-    local dir=$1
-    local order=$2
-    local recursive=$3
-
-    list_files "$dir" "$recursive" | sort -k1,1"$order" | awk '
-    {
-        mod_time = strftime("%Y-%m-%d", $1);
-        size = $2;
-        type = $3;
-        name = substr($0, index($0, $4));
-        count[mod_time]++;
-        files[mod_time] = files[mod_time] name "\n";
-    }
-    END {
-        for (date in files) {
-            print "Date: " date " (" count[date] " files)";
-            print files[date];
-        }
-    }' | less
-}
-
-# Function to display files sorted by size
-sort_by_size() {
-    local dir=$1
-    local order=$2
-    local recursive=$3
-
-    list_files "$dir" "$recursive" | sort -k2,2"$order" -k1,1n | awk '
-    {
-        mod_time = strftime("%Y-%m-%d", $1);
-        size = $2;
-        type = $3;
-        name = substr($0, index($0, $4));
-        count[size]++;
-        files[size] = files[size] name "\n";
-    }
-    END {
-        for (size in files) {
-            print "Size: " size " bytes (" count[size] " files)";
-            print files[size];
-        }
-    }' | less
-}
-
-# Function to display files grouped by type
-group_by_type() {
-    local dir=$1
-    local recursive=$2
-    local find_command="find \"$dir\""
-
-    if [ "$recursive" == "no" ]; then
-        find_command+=" -maxdepth 1"
-    fi
-
-    eval "$find_command" -exec stat --format="%F %n" {} + | sort -k1,1 | awk '
-    {
-        type = $1;
-        name = substr($0, index($0, $2));
-        count[type]++;
-        files[type] = files[type] name "\n";
-    }
-    END {
-        for (type in files) {
-            print "Type: " type " (" count[type] " items)";
-            print files[type];
-        }
-    }' | less
-}
-
-# Function to filter files based on a pattern
-filter_files() {
-    local dir=$1
-    local pattern=$2
-    local recursive=$3
-    local find_command="find \"$dir\""
-
-    if [ "$recursive" == "no" ]; then
-        find_command+=" -maxdepth 1"
-    fi
-
-    eval "$find_command" -name "$pattern" -exec stat --format="%F %n" {} + | less
-}
-
-# Main menu function
-main_menu() {
-    local dir
-    local recursive
-    local choice
-
-    read -rp "Enter the directory to analyze: " dir
+while true; do
+    clear
+    echo "Enter the directory to analyze:"
+    read dir
+    
     if [ ! -d "$dir" ]; then
-        echo "Invalid directory. Exiting."
-        exit 1
+        echo "Invalid directory!"
+        sleep 2
+        continue
     fi
-
-    read -rp "Include subdirectories? (yes/no): " recursive
-    if [[ "$recursive" != "yes" && "$recursive" != "no" ]]; then
-        echo "Invalid choice. Exiting."
-        exit 1
-    fi
-
-    while true; do
-        clear
-        echo "Menu:"
-        echo "1. Sort by most recent modification date"
-        echo "2. Sort by oldest modification date"
-        echo "3. Sort by size (largest to smallest)"
-        echo "4. Sort by size (smallest to largest)"
-        echo "5. Group by file type"
-        echo "6. Filter files starting with a given string"
-        echo "7. Filter files ending with a given string"
-        echo "8. Filter files containing a given string"
-        echo "9. Exit"
-        read -rp "Choose an option: " choice
-
-        case $choice in
-            1)
-                sort_by_modification_time "$dir" "r" "$recursive"
-                ;;
-            2)
-                sort_by_modification_time "$dir" "" "$recursive"
-                ;;
-            3)
-                sort_by_size "$dir" "r" "$recursive"
-                ;;
-            4)
-                sort_by_size "$dir" "" "$recursive"
-                ;;
-            5)
-                group_by_type "$dir" "$recursive"
-                ;;
-            6)
-                read -rp "Enter the starting string: " str
-                filter_files "$dir" "$str*" "$recursive"
-                ;;
-            7)
-                read -rp "Enter the ending string: " str
-                filter_files "$dir" "*$str" "$recursive"
-                ;;
-            8)
-                read -rp "Enter the containing string: " str
-                filter_files "$dir" "*$str*" "$recursive"
-                ;;
-            9)
-                echo "Exiting."
-                break
-                ;;
-            *)
-                echo "Invalid option. Please try again."
-                ;;
+    
+    echo "Choose filtering option:"
+    echo "1) No filter"
+    echo "2) Starts with a given string"
+    echo "3) Ends with a given string"
+    echo "4) Contains a given string"
+    read -p "Option: " filter_option
+    
+    filter_type="none"
+    filter_value=""
+    
+    if [ "$filter_option" -ne 1 ]; then
+        echo "Enter filter value:"
+        read filter_value
+        case $filter_option in
+            2) filter_type="starts" ;;
+            3) filter_type="ends" ;;
+            4) filter_type="contains" ;;
         esac
-        read -rp "Press Enter to continue..."
-    done
-}
+    fi
+    
+    echo "Choose sorting option:"
+    echo "1) Most recent"
+    echo "2) Oldest"
+    echo "3) Size (largest to smallest)"
+    echo "4) Size (smallest to largest)"
+    echo "5) File type"
+    echo "6) Exit"
+    read -p "Option: " sort_option
+    
+    case $sort_option in
+        1) list_files "$dir" "recent" "$filter_type" "$filter_value" ;;
+        2) list_files "$dir" "oldest" "$filter_type" "$filter_value" ;;
+        3) list_files "$dir" "size-desc" "$filter_type" "$filter_value" ;;
+        4) list_files "$dir" "size-asc" "$filter_type" "$filter_value" ;;
+        5) list_files "$dir" "type" "$filter_type" "$filter_value" ;;
+        6) exit 0 ;;
+        *) echo "Invalid option!"; sleep 2 ;;
+    esac
 
-# Run the main menu
-main_menu
+done

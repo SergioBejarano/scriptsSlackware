@@ -20,6 +20,7 @@ list_files() {
     
     find_command+=" -printf '%p %s %TY-%Tm-%Td %y\n'"
     
+    clear
     case $option in
         "recent")
             eval $find_command | sort -k3 -r | awk '{count[$3]++; print} END {for (date in count) print date, count[date]}' | less
@@ -73,23 +74,27 @@ while true; do
         esac
     fi
     
-    echo "Choose sorting option:"
-    echo "1) Most recent"
-    echo "2) Oldest"
-    echo "3) Size (largest to smallest)"
-    echo "4) Size (smallest to largest)"
-    echo "5) File type"
-    echo "6) Exit"
-    read -p "Option: " sort_option
-    
-    case $sort_option in
-        1) list_files "$dir" "recent" "$filter_type" "$filter_value" ;;
-        2) list_files "$dir" "oldest" "$filter_type" "$filter_value" ;;
-        3) list_files "$dir" "size-desc" "$filter_type" "$filter_value" ;;
-        4) list_files "$dir" "size-asc" "$filter_type" "$filter_value" ;;
-        5) list_files "$dir" "type" "$filter_type" "$filter_value" ;;
-        6) exit 0 ;;
-        *) echo "Invalid option!"; sleep 2 ;;
-    esac
-
+    while true; do
+        clear
+        echo "Choose sorting option:"
+        echo "1) Most recent"
+        echo "2) Oldest"
+        echo "3) Size (largest to smallest)"
+        echo "4) Size (smallest to largest)"
+        echo "5) File type"
+        echo "6) Back to main menu"
+        echo "7) Exit"
+        read -p "Option: " sort_option
+        
+        case $sort_option in
+            1) list_files "$dir" "recent" "$filter_type" "$filter_value" ;;
+            2) list_files "$dir" "oldest" "$filter_type" "$filter_value" ;;
+            3) list_files "$dir" "size-desc" "$filter_type" "$filter_value" ;;
+            4) list_files "$dir" "size-asc" "$filter_type" "$filter_value" ;;
+            5) list_files "$dir" "type" "$filter_type" "$filter_value" ;;
+            6) break ;;
+            7) exit 0 ;;
+            *) echo "Invalid option!"; sleep 2 ;;
+        esac
+    done
 done

@@ -23,23 +23,23 @@ list_files() {
     clear
     case $option in
         "recent")
-            eval $find_command | sort -k3 -r | awk '{count[$3]++; print} END {for (date in count) print date, count[date]}' | less
+            eval $find_command | sort -k3 -r | awk '{count[$3]++; print} END {for (date in count) print date, count[date]}' | more
             ;;
         "oldest")
-            eval $find_command | sort -k3 | awk '{count[$3]++; print} END {for (date in count) print date, count[date]}' | less
+            eval $find_command | sort -k3 | awk '{count[$3]++; print} END {for (date in count) print date, count[date]}' | more
             ;;
         "size-desc")
-            eval $find_command | sort -k2 -nr | awk '{count[$2]++; print} END {for (size in count) print size, count[size]}' | less
+            eval $find_command | sort -k2 -nr | awk '{count[$2]++; print} END {for (size in count) print size, count[size]}' | more
             ;;
         "size-asc")
-            eval $find_command | sort -k2 -n | awk '{count[$2]++; print} END {for (size in count) print size, count[size]}' | less
+            eval $find_command | sort -k2 -n | awk '{count[$2]++; print} END {for (size in count) print size, count[size]}' | more
             ;;
         "type")
-            eval $find_command | sort -k4 | awk '{count[$4]++; print} END {for (type in count) print type, count[type]}' | less
+            eval $find_command | sort -k4 | awk '{count[$4]++; print} END {for (type in count) print type, count[type]}' | more
             ;;
     esac
     
-    echo -e "\nPress Enter to return to the menu..."
+    echo -e "\nPresiona Enter para volver al menú..."
     read -r
 }
 
